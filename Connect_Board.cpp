@@ -133,7 +133,6 @@ int Connect_Board::tieBreaker(){
         }
     }
 
-    // HATA DÜZELTİLDİ: Tam eşitlik durumu adil hale getirildi
     if (xScore > oScore) {
         return 'X';
     }

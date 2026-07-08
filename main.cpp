@@ -13,21 +13,19 @@ char cells[9][6][7];       // 9 small boards (6 rows, 7 columns)
 char boardWinners[9];      // Winners of each small board (' ', 'X', 'O', 'T')
 char megaWinner = ' ';     // Overall game winner
 int nextBoard = -1;        // Required board to play (-1 = free choice)
-bool isPlayerTurn = true;  // true: Player's turn (X), false: PC's turn (O)
-float pcDelayTimer = 0.0f; // AI thinking delay
+char currentPlayer = 'X';  // 'X' (Player 1) or 'O' (Player 2)
 
 // Function Prototypes
 void ResetGame();
 bool DropDisc(int boardIdx, int col, char player);
-void CheckSmallBoardWin(int boardIdx);
-void CheckMegaBoardWin();
-void MakePCMove();
+void CheckSmallBoardWin(int boardIdx, char p);
+void CheckMegaBoardWin(char p);
 
 int main() {
     // Window Setup - 16:9 Format (1280x720)
     const int screenWidth = 1280;
     const int screenHeight = 720;
-    InitWindow(screenWidth, screenHeight, "Ultimate Connect 4 - Full UI Version");
+    InitWindow(screenWidth, screenHeight, "Ultimate Connect 4 - Local PvP");
     SetTargetFPS(60);
     srand(time(0));
 
@@ -39,13 +37,12 @@ int main() {
         splashTimer += GetFrameTime();
 
         BeginDrawing();
-        ClearBackground(GetColor(0x1a1a2eFF)); // Oyunun karanlık temasıyla uyumlu arka plan
+        ClearBackground(GetColor(0x1a1a2eFF));
 
         int textSize = 60;
-        const char* text = "Made By Efe :) ";
+        const char* text = "Welcome :) ";
         int textWidth = MeasureText(text, textSize);
 
-        // Yazıyı geniş ekranda tam ortaya hizalayıp çizer
         DrawText(text, (screenWidth - textWidth) / 2, screenHeight / 2 - (textSize / 2), textSize, LIGHTGRAY);
 
         EndDrawing();
@@ -61,7 +58,6 @@ int main() {
             case SCREEN_START: {
                 if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
                     Vector2 mousePos = GetMousePosition();
-                    // 1280 genişliğe göre ortalanmış butonun tıklama koordinatları
                     if (mousePos.x >= 540 && mousePos.x <= 740 && mousePos.y >= 400 && mousePos.y <= 460) {
                         currentScreen = SCREEN_GAME;
                     }
@@ -75,63 +71,52 @@ int main() {
                     break;
                 }
 
-                if (isPlayerTurn) {
-                    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-                        Vector2 mousePos = GetMousePosition();
+                // Her iki oyuncu için de sadece fare tıklaması bekleniyor
+                if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                    Vector2 mousePos = GetMousePosition();
 
-                        for (int i = 0; i < 3; i++) {
-                            for (int j = 0; j < 3; j++) {
-                                int bIdx = i * 3 + j;
-                                // Tahtaları 16:9 ekranda tam merkeze oturtan yeni koordinatlar
-                                int bx = 165 + j * 310;
-                                int by = 100 + i * 200;
+                    for (int i = 0; i < 3; i++) {
+                        for (int j = 0; j < 3; j++) {
+                            int bIdx = i * 3 + j;
+                            int bx = 165 + j * 310;
+                            int by = 100 + i * 200;
 
-                                if (nextBoard != -1 && nextBoard != bIdx && boardWinners[nextBoard] == ' ')
-                                    continue;
+                            if (nextBoard != -1 && nextBoard != bIdx && boardWinners[nextBoard] == ' ')
+                                continue;
 
-                                if (boardWinners[bIdx] != ' ')
-                                    continue;
+                            if (boardWinners[bIdx] != ' ')
+                                continue;
 
-                                if (mousePos.x >= bx && mousePos.x <= bx + 280 &&
-                                    mousePos.y >= by && mousePos.y <= by + 180) {
+                            if (mousePos.x >= bx && mousePos.x <= bx + 280 &&
+                                mousePos.y >= by && mousePos.y <= by + 180) {
 
-                                    int col = (mousePos.x - bx) / 40;
+                                int col = (mousePos.x - bx) / 40;
 
-                                    if (col >= 0 && col < 7) {
-                                        if (DropDisc(bIdx, col, 'X')) {
+                                if (col >= 0 && col < 7) {
+                                    if (DropDisc(bIdx, col, currentPlayer)) {
 
-                                            CheckSmallBoardWin(bIdx);
-                                            CheckMegaBoardWin();
+                                        CheckSmallBoardWin(bIdx, currentPlayer);
+                                        CheckMegaBoardWin(currentPlayer);
 
-                                            if (boardWinners[col] == ' ')
-                                                nextBoard = col;
-                                            else
-                                                nextBoard = -1;
+                                        if (boardWinners[col] == ' ')
+                                            nextBoard = col;
+                                        else
+                                            nextBoard = -1;
 
-                                            isPlayerTurn = false;
-                                            pcDelayTimer = GetTime();
-                                        }
+                                        // Sırayı diğer oyuncuya geçir
+                                        currentPlayer = (currentPlayer == 'X') ? 'O' : 'X';
                                     }
                                 }
                             }
                         }
                     }
                 }
-                else {
-                    if (GetTime() - pcDelayTimer > 0.5f) {
-                        MakePCMove();
-                        CheckMegaBoardWin();
-                        isPlayerTurn = true;
-                    }
-                }
-
                 break;
             }
 
             case SCREEN_GAMEOVER: {
                 if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
                     Vector2 mousePos = GetMousePosition();
-                    // 1280 genişliğe göre ortalanmış buton
                     if (mousePos.x >= 540 && mousePos.x <= 740 && mousePos.y >= 450 && mousePos.y <= 510) {
                         ResetGame();
                         currentScreen = SCREEN_GAME;
@@ -148,12 +133,11 @@ int main() {
         switch (currentScreen) {
 
             case SCREEN_START: {
-                // Yazıları dinamik olarak ekranın ortasına hesaplayıp çizer
-                int titleWidth = MeasureText("ULTIMATE CONNECT 4", 50);
-                DrawText("ULTIMATE CONNECT 4", (screenWidth - titleWidth) / 2, 200, 50, GOLD);
+                int titleWidth = MeasureText("CONNECT 4 ULTIMATE", 50);
+                DrawText("CONNECT 4 ULTIMATE", (screenWidth - titleWidth) / 2, 200, 50, GOLD);
 
-                int subWidth = MeasureText("C++ & Raylib Game Engine", 20);
-                DrawText("C++ & Raylib Game Engine", (screenWidth - subWidth) / 2, 270, 20, LIGHTGRAY);
+                int subWidth = MeasureText("Local Multiplayer (PvP)", 20);
+                DrawText("Local Multiplayer (PvP)", (screenWidth - subWidth) / 2, 270, 20, LIGHTGRAY);
 
                 DrawRectangle(540, 400, 200, 60, MAROON);
                 DrawRectangleLinesEx(Rectangle{540, 400, 200, 60}, 2, WHITE);
@@ -165,33 +149,31 @@ int main() {
             }
 
             case SCREEN_GAME: {
-
-                if (isPlayerTurn)
-                    DrawText("YOUR TURN (X)", 165, 40, 30, GREEN);
+                // Hangi oyuncunun sırasıysa ekrana yazdırıyoruz
+                if (currentPlayer == 'X')
+                    DrawText("PLAYER 1 TURN (X)", 165, 40, 30, GREEN);
                 else
-                    DrawText("PC IS THINKING (O)...", 165, 40, 30, ORANGE);
+                    DrawText("PLAYER 2 TURN (O)", 165, 40, 30, RED);
 
                 if (nextBoard != -1 && boardWinners[nextBoard] == ' ') {
                     const char* reqText = TextFormat("Required Board: %d", nextBoard + 1);
                     int reqTextWidth = MeasureText(reqText, 24);
-                    DrawText(reqText, 1115 - reqTextWidth, 45, 24, GOLD); // Sağ hizalı
+                    DrawText(reqText, 1115 - reqTextWidth, 45, 24, GOLD);
                 }
                 else {
                     const char* freeText = "Free Move: Play on Any Board";
                     int freeTextWidth = MeasureText(freeText, 24);
-                    DrawText(freeText, 1115 - freeTextWidth, 45, 24, LIGHTGRAY); // Sağ hizalı
+                    DrawText(freeText, 1115 - freeTextWidth, 45, 24, LIGHTGRAY);
                 }
 
                 for (int i = 0; i < 3; i++) {
                     for (int j = 0; j < 3; j++) {
 
                         int bIdx = i * 3 + j;
-                        // Ortalanmış tahtalar
                         int bx = 165 + j * 310;
                         int by = 100 + i * 200;
 
                         if (boardWinners[bIdx] == ' ') {
-
                             if (nextBoard == bIdx)
                                 DrawRectangle(bx - 5, by - 5, 290, 190, GetColor(0x3e3e12FF));
                             else
@@ -206,19 +188,15 @@ int main() {
 
                                 if (cells[bIdx][r][c] == 'X')
                                     DrawCircle(cx, cy, 12, GREEN);
-
                                 else if (cells[bIdx][r][c] == 'O')
                                     DrawCircle(cx, cy, 12, RED);
-
                                 else
                                     DrawCircle(cx, cy, 12, GetColor(0x0f172aFF));
                             }
                         }
 
                         DrawRectangleLinesEx(Rectangle{(float)bx, (float)by, 280, 180}, 2, DARKBLUE);
-
-                        DrawText(TextFormat("Board %d", bIdx + 1),
-                                 bx + 10, by - 20, 16, GRAY);
+                        DrawText(TextFormat("Board %d", bIdx + 1), bx + 10, by - 20, 16, GRAY);
 
                         if (boardWinners[bIdx] == 'X') {
                             DrawRectangle(bx, by, 280, 180, Fade(GREEN, 0.4f));
@@ -230,22 +208,20 @@ int main() {
                         }
                     }
                 }
-
                 break;
             }
 
             case SCREEN_GAMEOVER: {
-
                 int goWidth = MeasureText("GAME OVER", 50);
                 DrawText("GAME OVER", (screenWidth - goWidth) / 2, 200, 50, GOLD);
 
                 if (megaWinner == 'X') {
-                    int wWidth = MeasureText("CONGRATULATIONS! YOU WIN!", 34);
-                    DrawText("CONGRATULATIONS! YOU WIN!", (screenWidth - wWidth) / 2, 300, 34, GREEN);
+                    int wWidth = MeasureText("PLAYER 1 (X) WINS!", 34);
+                    DrawText("PLAYER 1 (X) WINS!", (screenWidth - wWidth) / 2, 300, 34, GREEN);
                 }
                 else if (megaWinner == 'O') {
-                    int lWidth = MeasureText("YOU LOST! THE PC WINS.", 34);
-                    DrawText("YOU LOST! THE PC WINS.", (screenWidth - lWidth) / 2, 300, 34, RED);
+                    int lWidth = MeasureText("PLAYER 2 (O) WINS!", 34);
+                    DrawText("PLAYER 2 (O) WINS!", (screenWidth - lWidth) / 2, 300, 34, RED);
                 }
                 else {
                     int dWidth = MeasureText("IT'S A DRAW!", 34);
@@ -276,10 +252,9 @@ void ResetGame() {
             for (int c = 0; c < 7; c++)
                 cells[b][r][c] = ' ';
     }
-
     megaWinner = ' ';
     nextBoard = -1;
-    isPlayerTurn = true;
+    currentPlayer = 'X'; // Oyuna her zaman 1. oyuncu (X) başlar
 }
 
 bool DropDisc(int boardIdx, int col, char player) {
@@ -292,10 +267,7 @@ bool DropDisc(int boardIdx, int col, char player) {
     return false;
 }
 
-void CheckSmallBoardWin(int b) {
-
-    char p = isPlayerTurn ? 'X' : 'O';
-
+void CheckSmallBoardWin(int b, char p) {
     // Horizontal
     for (int r = 0; r < 6; r++)
         for (int c = 0; c < 4; c++)
@@ -341,10 +313,7 @@ void CheckSmallBoardWin(int b) {
             }
 }
 
-void CheckMegaBoardWin() {
-
-    char p = isPlayerTurn ? 'X' : 'O';
-
+void CheckMegaBoardWin(char p) {
     int combinations[8][3] = {
             {0,1,2}, {3,4,5}, {6,7,8},
             {0,3,6}, {1,4,7}, {2,5,8},
@@ -359,45 +328,5 @@ void CheckMegaBoardWin() {
             megaWinner = p;
             return;
         }
-    }
-}
-
-void MakePCMove() {
-
-    int targetBoard = nextBoard;
-
-    if (targetBoard == -1 || boardWinners[targetBoard] != ' ') {
-
-        std::vector<int> openBoards;
-
-        for (int i = 0; i < 9; i++)
-            if (boardWinners[i] == ' ')
-                openBoards.push_back(i);
-
-        if (openBoards.empty()) {
-            megaWinner = 'T';
-            return;
-        }
-
-        targetBoard = openBoards[rand() % openBoards.size()];
-    }
-
-    std::vector<int> validCols;
-
-    for (int c = 0; c < 7; c++)
-        if (cells[targetBoard][0][c] == ' ')
-            validCols.push_back(c);
-
-    if (!validCols.empty()) {
-
-        int chosenCol = validCols[rand() % validCols.size()];
-
-        DropDisc(targetBoard, chosenCol, 'O');
-        CheckSmallBoardWin(targetBoard);
-
-        if (boardWinners[chosenCol] == ' ')
-            nextBoard = chosenCol;
-        else
-            nextBoard = -1;
     }
 }

@@ -16,11 +16,7 @@ public:
     int checkMetaWin(char player);
     int checkMetaDraw();
     void copyMetaBoard(char target[3][3]);
-    void setMetaBoard(const char source[3][3]); // const eklendi
-    char calculateThirdRound(char round1[3][3], char round2[3][3]);
-    char applyAddition(char first, char second);
-    char applySubtraction(char first, char second);
-    char randomTieBreaker();
+    void setMetaBoard(const char source[3][3]);
     void print();
     char getWinner();
     int isFinished();

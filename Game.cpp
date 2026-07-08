@@ -1,16 +1,11 @@
-/* Yaren Barış– 2637460, Efe Özgür – 2638104
-We read and accept the submission rules and the extra rules specified
-in each question. This is our own work that is done by us only */
-
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
 #include "Game.h"
 
-
 using namespace std;
 
-Game::Game(){// Before the game starts, set scores to zero and sets cell values all zero
+Game::Game(){ // Oyundan önce skorları sıfırlar ve hücreleri temizler
     int i,j,k;
 
     xScore = 0;
@@ -20,13 +15,13 @@ Game::Game(){// Before the game starts, set scores to zero and sets cell values 
     {
         for (j = 0; j < 3;j++) {
             for (k = 0; k < 3; k++) {
-                roundBoards[i][j][k] = ' '; //Empty value for all cells
+                roundBoards[i][j][k] = ' ';
             }
         }
     }
 }
 
-void Game::startGame(){//game is best of three. That means 2 point wins
+void Game::startGame(){
     srand(time(0));
 
     cout << "Ultimate Connect 4 Game Started" << endl;
@@ -52,7 +47,7 @@ void Game::startGame(){//game is best of three. That means 2 point wins
     printFinalWinner();
 }
 
-void Game::playNormalRound(int roundNumber){//regular round there is no need for winner calculate scores and prints
+void Game::playNormalRound(int roundNumber){
     char roundWinner;
 
     cout << endl;
@@ -84,15 +79,24 @@ void Game::playNormalRound(int roundNumber){//regular round there is no need for
     cout << "O: " << oScore << endl;
 }
 
-void Game::playThirdRound(){// on that round score should be 1-1(tieBrake). So tieBreaak function calculates the board score and decides the winner
+void Game::playThirdRound(){
     char thirdWinner;
 
     cout << endl;
-    cout << "Round 3 started." << endl;
-    cout << "No player input will be taken in this round." << endl;
+    cout << "Round 3 started. Both players, please take your turns." << endl;
 
+    // 3. turda da otomatik hesaplama yerine tahtayı sıfırlayıp normal oyunu başlatıyoruz
     roundGame.resetUltimate();
-    thirdWinner = roundGame.calculateThirdRound(roundBoards[0], roundBoards[1]);
+    roundGame.playRound();
+
+    thirdWinner = roundGame.getWinner();
+
+    if (thirdWinner == 'D') {
+        cout << "Large board ended with draw." << endl;
+        cout << "This round will be restarted." << endl;
+        playThirdRound();
+        return;
+    }
 
     if (thirdWinner == 'X'){
         xScore++;
@@ -102,7 +106,7 @@ void Game::playThirdRound(){// on that round score should be 1-1(tieBrake). So t
     }
 }
 
-void Game::printFinalWinner(){//Prints scores and winner
+void Game::printFinalWinner(){
     cout << endl;
     cout << "Final Score" << endl;
     cout << "X: " << xScore << endl;

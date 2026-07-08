@@ -159,7 +159,6 @@ void Connect_Ultimate::copyMetaBoard(char target[3][3]) {
     }
 }
 
-// const düzeltmesi buraya eklendi
 void Connect_Ultimate::setMetaBoard(const char source[3][3]) {
     int i, j;
     for (i=0; i<3; i++) {
@@ -169,84 +168,10 @@ void Connect_Ultimate::setMetaBoard(const char source[3][3]) {
     }
 }
 
-char Connect_Ultimate::calculateThirdRound(char round1[3][3], char round2[3][3]) {
-    int randomNumber;
-    int i, j;
-    char resultBoard[3][3];
-    char thirdWinner;
-    randomNumber = rand() % 2;
-    if (randomNumber == 0) {
-        cout << "Random operator is addition (+)." << endl;
-        for (i=0; i<3; i++) {
-            for (j=0; j<3; j++) {
-                resultBoard[i][j] = applyAddition(round1[i][j], round2[i][j]);
-            }
-        }
-    }
-    else {
-        cout << "Random operator is subtraction (-)." << endl;
-        for (i=0; i<3; i++) {
-            for (j=0; j<3; j++) {
-                resultBoard[i][j] = applySubtraction(round1[i][j], round2[i][j]);
-            }
-        }
-    }
-    setMetaBoard(resultBoard);
-    print();
-    if (checkMetaWin('X') == 1) {
-        thirdWinner = 'X';
-    }
-    else if (checkMetaWin('O') == 1) {
-        thirdWinner = 'O';
-    }
-    else {
-        thirdWinner = randomTieBreaker();
-        cout << "No standard winner in result board." << endl;
-        cout << "Random tie breaker winner is " << thirdWinner << endl;
-    }
-    winner = thirdWinner;
-    finished = 1;
-    return thirdWinner;
-}
-
-char Connect_Ultimate::applyAddition(char first, char second) {
-    if (first == 'X' && second == 'X') return 'X';
-    else if (first == 'X' && second == 'O') return 'X';
-    else if (first == 'O' && second == 'X') return 'X';
-    else if (first == 'O' && second == 'O') return 'O';
-    else if (first == ' ' && second == 'X') return 'X';
-    else if (first == ' ' && second == 'O') return 'O';
-    else if (first == 'X' && second == ' ') return 'X';
-    else if (first == 'O' && second == ' ') return 'O';
-    return ' ';
-}
-
-char Connect_Ultimate::applySubtraction(char first, char second) {
-    if (first == 'X' && second == 'X') return 'X';
-    else if (first == 'X' && second == 'O') return 'O';
-    else if (first == 'O' && second == 'X') return 'O';
-    else if (first == 'O' && second == 'O') return 'O';
-    else if (first == ' ' && second == 'X') return 'X';
-    else if (first == ' ' && second == 'O') return 'O';
-    else if (first == 'X' && second == ' ') return 'X';
-    else if (first == 'O' && second == ' ') return 'O';
-    return ' ';
-}
-
-char Connect_Ultimate::randomTieBreaker() {
-    int randomNumber;
-    randomNumber = rand() % 2;
-    if (randomNumber == 0) {
-        return 'X';
-    }
-    return 'O';
-}
-
 void Connect_Ultimate::print() {
     int i, j;
     int boardNumber;
 
-    // Geliştirilmiş Yazdırma Arayüzü: Küçük panellerin içini de gösterir
     cout << "\n=== KUCUK OYUN TAHTALARI (1-9) DURUMU ===" << endl;
     boardNumber = 1;
     for (i = 0; i < 3; i++) {
