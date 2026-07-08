@@ -68,5 +68,5 @@ The game is played entirely using the Mouse.
 
 Developers
 
-- Game Logic and Core Code: Efe Ozgur & Yaren Baris
-- User Interface (UI) and Gameplay: Efe Ozgur
+- Game Logic and Core Code: Efe Özgür & Yaren Barış
+- User Interface (UI) and Gameplay: Efe Özgür
