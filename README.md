@@ -5,6 +5,9 @@ Connect 4 Ultimate is a strategic board game developed using C++ and Raylib. It 
 Note: This project was originally designed as Player vs PC (AI), but was later completely redesigned to focus entirely on Local PvP (Player vs Player) gameplay.
 
 ---
+<img width="1265" height="745" alt="image" src="https://github.com/user-attachments/assets/bb55fce2-98cd-47c3-91e6-961dbb7aef58" />
+<img width="1276" height="753" alt="image" src="https://github.com/user-attachments/assets/31fee5d5-aaa8-446e-baa9-7108e26a0736" />
+
 
 Features
 
